@@ -121,10 +121,10 @@ def _vertex_response(question: str, context: str) -> Tuple[str, str, str, float]
         try:
             data = json.loads(json_match.group())
             return (
-                data.get("answer", "Unable to generate answer."),
-                _normalise(data.get("risk_level", "medium")),
-                data.get("risk_summary", ""),
-                float(data.get("confidence", 0.5)),
+                data.get("answer") or "Unable to generate answer.",
+                _normalise(data.get("risk_level") or "medium"),
+                data.get("risk_summary") or "",
+                float(data.get("confidence") or 0.5),
             )
         except (json.JSONDecodeError, ValueError):
             pass
@@ -186,10 +186,10 @@ def _ollama_response(question: str, context: str) -> Tuple[str, str, str, float]
         try:
             data = json.loads(json_match.group())
             return (
-                data.get("answer", "Unable to generate answer."),
-                _normalise(data.get("risk_level", "medium")),
-                data.get("risk_summary", ""),
-                float(data.get("confidence", 0.5)),
+                data.get("answer") or "Unable to generate answer.",
+                _normalise(data.get("risk_level") or "medium"),
+                data.get("risk_summary") or "",
+                float(data.get("confidence") or 0.5),
             )
         except (json.JSONDecodeError, ValueError):
             pass
@@ -270,10 +270,10 @@ def _anthropic_response(question: str, context: str) -> Tuple[str, str, str, flo
         try:
             data = json.loads(json_match.group())
             return (
-                data.get("answer", "Unable to generate answer."),
-                _normalise(data.get("risk_level", "medium")),
-                data.get("risk_summary", ""),
-                float(data.get("confidence", 0.5)),
+                data.get("answer") or "Unable to generate answer.",
+                _normalise(data.get("risk_level") or "medium"),
+                data.get("risk_summary") or "",
+                float(data.get("confidence") or 0.5),
             )
         except (json.JSONDecodeError, ValueError):
             pass

@@ -108,7 +108,7 @@ def embed_texts(texts: List[str]) -> List[List[float]]:
         return []
     if settings.model_provider == "mock":
         return _mock_embed_batch(texts)
-    if settings.model_provider == "anthropic":
+    if settings.model_provider in ("anthropic", "ollama"):
         return _st_embed_batch(texts)
     return _vertex_embed_batch(texts)
 
