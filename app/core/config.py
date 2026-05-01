@@ -1,5 +1,5 @@
-from pydantic_settings import BaseSettings
 from functools import lru_cache
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -12,21 +12,22 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60
 
     # Model / AI
-    model_provider: str = "vertex"
-    embedding_model: str
-    gen_model: str
+    model_provider: str = "mock"
+    embedding_model: str = "all-MiniLM-L6-v2"
+    gen_model: str = "claude-opus-4-6"
 
-    # Vertex AI (or other providers)
-    vertex_project_id: str
+    # Anthropic
+    anthropic_api_key: str = ""
+
+    # Vertex AI
+    vertex_project_id: str = ""
     vertex_location: str = "us-central1"
 
     # Vector store
     vector_index_path: str = "./app/data/faiss.index"
     doc_store_path: str = "./app/data/docstore.json"
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
+    model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
 
 
 # Cache settings so it's only loaded once
