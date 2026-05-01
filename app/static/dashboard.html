@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Risk Intelligence — Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f1f5f9;
+      color: #0f172a;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      width: 240px;
+      background: #0f172a;
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      margin-bottom: 8px;
+    }
+
+    .sidebar-logo .icon { font-size: 22px; }
+    .sidebar-logo h1 { font-size: 15px; font-weight: 700; color: #fff; }
+    .sidebar-logo span { font-size: 11px; color: #64748b; display: block; }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: #94a3b8;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background 0.15s, color 0.15s;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+
+    .nav-item:hover { background: rgba(255,255,255,0.06); color: #e2e8f0; }
+    .nav-item.active { background: rgba(59,130,246,0.2); color: #60a5fa; }
+    .nav-item .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+    .sidebar-footer {
+      margin-top: auto;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding-top: 16px;
+    }
+
+    .user-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      color: #94a3b8;
+      font-size: 13px;
+    }
+
+    .avatar {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, #1e40af, #3b82f6);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    /* ── Main ── */
+    .main { margin-left: 240px; padding: 32px; min-height: 100vh; }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .page-header { margin-bottom: 28px; }
+    .page-header h2 { font-size: 22px; font-weight: 700; color: #0f172a; }
+    .page-header p { font-size: 14px; color: #64748b; margin-top: 4px; }
+
+    /* ── Stat grid ── */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    }
+
+    .stat-card .label { font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-card .value { font-size: 28px; font-weight: 700; color: #0f172a; margin-top: 6px; }
+    .stat-card .sub { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+
+    /* ── Card ── */
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    /* ── Tabs ── */
+    .tab-bar {
+      display: flex;
+      gap: 4px;
+      background: #f1f5f9;
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 9px;
+      border: none;
+      background: none;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #64748b;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .tab-btn.active { background: #fff; color: #1e40af; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Forms ── */
+    .form-group { margin-bottom: 16px; }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 6px;
+    }
+
+    input[type="text"], select, textarea {
+      width: 100%;
+      padding: 10px 13px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #0f172a;
+      background: #f8fafc;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      font-family: inherit;
+    }
+
+    input[type="text"]:focus, select:focus, textarea:focus {
+      border-color: #3b82f6;
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+    }
+
+    textarea { resize: vertical; min-height: 120px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    /* ── Drop zone ── */
+    .drop-zone {
+      border: 2px dashed #cbd5e1;
+      border-radius: 12px;
+      padding: 40px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      background: #f8fafc;
+      position: relative;
+    }
+
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: #3b82f6;
+      background: #eff6ff;
+    }
+
+    .drop-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .drop-zone .dz-icon { font-size: 40px; margin-bottom: 12px; }
+    .drop-zone .dz-title { font-size: 15px; font-weight: 600; color: #374151; margin-bottom: 4px; }
+    .drop-zone .dz-sub { font-size: 13px; color: #94a3b8; }
+    .drop-zone .dz-sub span { color: #3b82f6; font-weight: 600; }
+
+    /* ── File preview ── */
+    .file-preview {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      background: #eff6ff;
+      border: 1.5px solid #bfdbfe;
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-top: 12px;
+    }
+
+    .file-preview.show { display: flex; }
+    .file-preview .file-icon { font-size: 28px; }
+    .file-preview .file-info { flex: 1; min-width: 0; }
+    .file-preview .file-name { font-size: 14px; font-weight: 600; color: #1e40af; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .file-preview .file-size { font-size: 12px; color: #64748b; margin-top: 2px; }
+    .file-preview .file-remove { background: none; border: none; cursor: pointer; color: #94a3b8; font-size: 18px; padding: 4px; border-radius: 4px; }
+    .file-preview .file-remove:hover { color: #ef4444; background: #fee2e2; }
+
+    /* ── Progress bar ── */
+    .upload-progress {
+      display: none;
+      margin-top: 12px;
+    }
+
+    .upload-progress.show { display: block; }
+    .progress-label { font-size: 12px; color: #64748b; margin-bottom: 6px; display: flex; justify-content: space-between; }
+    .progress-track { background: #e2e8f0; border-radius: 999px; height: 6px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #3b82f6, #1e40af); transition: width 0.3s ease; width: 0%; }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.2s;
+    }
+
+    .btn:hover { opacity: 0.88; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: linear-gradient(135deg, #1e40af, #3b82f6); color: #fff; }
+
+    /* ── Alerts ── */
+    .alert {
+      display: none;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 13px;
+      margin-top: 14px;
+    }
+
+    .alert.show { display: block; }
+    .alert-success { background: #f0fdf4; border: 1px solid #86efac; color: #166534; }
+    .alert-success strong { display: block; font-size: 14px; margin-bottom: 4px; }
+    .alert-error { background: #fee2e2; border: 1px solid #fca5a5; color: #b91c1c; }
+
+    /* ── Query result ── */
+    .result-box {
+      display: none;
+      margin-top: 20px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+    }
+
+    .result-box.show { display: block; }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .risk-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .risk-low      { background: #dcfce7; color: #16a34a; }
+    .risk-medium   { background: #fef9c3; color: #ca8a04; }
+    .risk-high     { background: #fee2e2; color: #dc2626; }
+    .risk-critical { background: #4c0519; color: #fda4af; }
+
+    .result-body { padding: 16px; font-size: 14px; color: #1e293b; line-height: 1.6; }
+    .answer-text { margin-bottom: 16px; white-space: pre-wrap; }
+
+    .risk-summary {
+      background: #f8fafc;
+      border-left: 3px solid #3b82f6;
+      padding: 10px 14px;
+      border-radius: 0 6px 6px 0;
+      font-size: 13px;
+      color: #374151;
+      margin-bottom: 16px;
+    }
+
+    .sources-title { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+
+    .source-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 12px;
+      margin: 0 4px 4px 0;
+    }
+
+    .confidence-bar { margin-top: 14px; background: #f1f5f9; border-radius: 999px; height: 6px; overflow: hidden; }
+    .confidence-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #3b82f6, #1e40af); transition: width 0.6s ease; }
+    .confidence-label { font-size: 12px; color: #64748b; margin-top: 5px; }
+
+    .loading-dots::after {
+      content: "";
+      animation: dots 1.2s steps(4, end) infinite;
+    }
+    @keyframes dots { 0%{content:""} 25%{content:"."} 50%{content:".."} 75%{content:"..."} }
+  </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="icon">🛡</div>
+    <div>
+      <h1>Risk Intelligence</h1>
+      <span>Secure RAG Platform</span>
+    </div>
+  </div>
+
+  <button class="nav-item active" onclick="showPage('overview', this)">
+    <span class="nav-icon">📊</span> Overview
+  </button>
+  <button class="nav-item" onclick="showPage('ingest', this)">
+    <span class="nav-icon">📥</span> Ingest Document
+  </button>
+  <button class="nav-item" onclick="showPage('query', this)">
+    <span class="nav-icon">🔍</span> Risk Query
+  </button>
+
+  <div class="sidebar-footer">
+    <div class="user-badge">
+      <div class="avatar" id="avatarInitial">A</div>
+      <div>
+        <div id="sidebarUsername" style="color:#e2e8f0;font-size:13px;font-weight:600;">analyst</div>
+        <div style="font-size:11px;color:#64748b;">Signed in</div>
+      </div>
+    </div>
+    <button class="nav-item" onclick="logout()" style="margin-top:4px;">
+      <span class="nav-icon">🚪</span> Sign out
+    </button>
+  </div>
+</nav>
+
+<!-- Main -->
+<main class="main">
+
+  <!-- ── Overview ── -->
+  <div class="page active" id="page-overview">
+    <div class="page-header">
+      <h2>Overview</h2>
+      <p>Your risk intelligence platform at a glance</p>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="label">Documents Ingested</div>
+        <div class="value" id="stat-docs">0</div>
+        <div class="sub">this session</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Queries Run</div>
+        <div class="value" id="stat-queries">0</div>
+        <div class="sub">this session</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">API Status</div>
+        <div class="value" id="stat-status" style="font-size:18px;margin-top:10px;">Checking...</div>
+        <div class="sub" id="stat-status-sub"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Getting Started</div>
+      <ol style="padding-left:18px;font-size:14px;color:#374151;line-height:2.2;">
+        <li>Go to <strong>Ingest Document</strong> — paste text or upload a PDF file</li>
+        <li>Go to <strong>Risk Query</strong> — ask a question about the uploaded content</li>
+        <li>Review the AI answer, risk level, confidence score, and source citations</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- ── Ingest ── -->
+  <div class="page" id="page-ingest">
+    <div class="page-header">
+      <h2>Ingest Document</h2>
+      <p>Upload financial documents into the knowledge base</p>
+    </div>
+
+    <div class="card">
+      <!-- Tabs -->
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab('pdf', this)">📄 Upload PDF</button>
+        <button class="tab-btn" onclick="switchTab('text', this)">✏️ Paste Text</button>
+      </div>
+
+      <!-- PDF tab -->
+      <div class="tab-panel active" id="tab-pdf">
+        <div class="drop-zone" id="dropZone"
+             ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+          <input type="file" id="pdfInput" accept=".pdf" onchange="onFileSelect(event)" />
+          <div class="dz-icon">📂</div>
+          <div class="dz-title">Drag &amp; drop a PDF here</div>
+          <div class="dz-sub">or <span>browse to choose a file</span></div>
+        </div>
+
+        <div class="file-preview" id="filePreview">
+          <div class="file-icon">📄</div>
+          <div class="file-info">
+            <div class="file-name" id="fileName"></div>
+            <div class="file-size" id="fileSize"></div>
+          </div>
+          <button class="file-remove" onclick="clearFile()" title="Remove file">✕</button>
+        </div>
+
+        <div class="upload-progress" id="uploadProgress">
+          <div class="progress-label">
+            <span id="progressLabel">Uploading...</span>
+            <span id="progressPct">0%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        </div>
+
+        <div class="form-group" style="margin-top:16px;max-width:220px;">
+          <label for="pdf-doc-type">Document Type</label>
+          <select id="pdf-doc-type">
+            <option value="report">Report</option>
+            <option value="transaction">Transaction</option>
+            <option value="alert">Alert</option>
+            <option value="filing">Filing</option>
+          </select>
+        </div>
+
+        <button class="btn btn-primary" id="uploadBtn" onclick="uploadPdf()">
+          Upload &amp; Index PDF
+        </button>
+
+        <div class="alert alert-error" id="pdf-error"></div>
+        <div class="alert alert-success" id="pdf-success">
+          <strong>PDF indexed successfully</strong>
+          <span id="pdf-result-text"></span>
+        </div>
+      </div>
+
+      <!-- Text tab -->
+      <div class="tab-panel" id="tab-text">
+        <div class="form-group">
+          <label for="ingest-text">Document Text</label>
+          <textarea id="ingest-text" placeholder="Paste the full document text here...&#10;&#10;Example: Q3 2024 Report — Default rates surged to 4.1%. Fraud cases increased by 60%..."></textarea>
+        </div>
+        <div class="row">
+          <div class="form-group">
+            <label for="ingest-source">Source</label>
+            <input type="text" id="ingest-source" placeholder="e.g. q3_report.pdf"/>
+          </div>
+          <div class="form-group">
+            <label for="ingest-type">Document Type</label>
+            <select id="ingest-type">
+              <option value="report">Report</option>
+              <option value="transaction">Transaction</option>
+              <option value="alert">Alert</option>
+              <option value="filing">Filing</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="ingestBtn" onclick="ingestText()">
+          Upload &amp; Index Text
+        </button>
+
+        <div class="alert alert-error" id="text-error"></div>
+        <div class="alert alert-success" id="text-success">
+          <strong>Document indexed successfully</strong>
+          <span id="text-result-text"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Query ── -->
+  <div class="page" id="page-query">
+    <div class="page-header">
+      <h2>Risk Query</h2>
+      <p>Ask questions against ingested documents and receive AI-powered risk assessments</p>
+    </div>
+
+    <div class="card">
+      <div class="form-group">
+        <label for="query-question">Your Question</label>
+        <textarea id="query-question" style="min-height:80px;" placeholder="e.g. What is the default rate trend and what risk does it pose?"></textarea>
+      </div>
+      <div class="form-group" style="max-width:180px;">
+        <label for="query-topk">Results to retrieve</label>
+        <select id="query-topk">
+          <option value="3">3 chunks</option>
+          <option value="5" selected>5 chunks</option>
+          <option value="10">10 chunks</option>
+        </select>
+      </div>
+
+      <button class="btn btn-primary" id="queryBtn" onclick="runQuery()">Run Risk Query</button>
+
+      <div class="alert alert-error" id="query-error"></div>
+
+      <div class="result-box" id="query-result">
+        <div class="result-header">
+          <span>Risk Assessment Result</span>
+          <span id="result-risk-badge" class="risk-badge"></span>
+        </div>
+        <div class="result-body">
+          <div class="answer-text" id="result-answer"></div>
+          <div class="risk-summary" id="result-summary"></div>
+          <div class="sources-title">Source Documents</div>
+          <div id="result-sources"></div>
+          <div class="confidence-bar">
+            <div class="confidence-fill" id="confidence-fill"></div>
+          </div>
+          <div class="confidence-label" id="confidence-label"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  // ── Auth guard ──
+  const token = sessionStorage.getItem("token");
+  const username = sessionStorage.getItem("username") || "analyst";
+  if (!token) window.location.href = "/";
+
+  document.getElementById("sidebarUsername").textContent = username;
+  document.getElementById("avatarInitial").textContent = username[0].toUpperCase();
+
+  // ── Session stats ──
+  let docsIngested = 0, queriesRun = 0;
+
+  // ── Navigation ──
+  function showPage(name, el) {
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+    document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+    document.getElementById("page-" + name).classList.add("active");
+    el.classList.add("active");
+  }
+
+  // ── Tabs ──
+  function switchTab(name, el) {
+    document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.getElementById("tab-" + name).classList.add("active");
+    el.classList.add("active");
+  }
+
+  // ── Health check ──
+  async function checkHealth() {
+    try {
+      const resp = await fetch("/health");
+      const data = await resp.json();
+      const el = document.getElementById("stat-status");
+      el.textContent = data.status === "ok" ? "Online" : "Degraded";
+      el.style.color = data.status === "ok" ? "#16a34a" : "#dc2626";
+      document.getElementById("stat-status-sub").textContent = "all systems operational";
+    } catch {
+      document.getElementById("stat-status").textContent = "Offline";
+      document.getElementById("stat-status").style.color = "#dc2626";
+    }
+  }
+  checkHealth();
+
+  // ── PDF drag & drop ──
+  let selectedFile = null;
+
+  function onDragOver(e) {
+    e.preventDefault();
+    document.getElementById("dropZone").classList.add("drag-over");
+  }
+
+  function onDragLeave(e) {
+    document.getElementById("dropZone").classList.remove("drag-over");
+  }
+
+  function onDrop(e) {
+    e.preventDefault();
+    document.getElementById("dropZone").classList.remove("drag-over");
+    const file = e.dataTransfer.files[0];
+    if (file) setFile(file);
+  }
+
+  function onFileSelect(e) {
+    const file = e.target.files[0];
+    if (file) setFile(file);
+  }
+
+  function setFile(file) {
+    if (!file.name.toLowerCase().endsWith(".pdf")) {
+      showAlert("pdf-error", "Only PDF files are supported.");
+      return;
+    }
+    selectedFile = file;
+    document.getElementById("fileName").textContent = file.name;
+    document.getElementById("fileSize").textContent = formatBytes(file.size);
+    document.getElementById("filePreview").classList.add("show");
+    document.getElementById("dropZone").style.display = "none";
+    clearAlert("pdf-error");
+    clearAlert("pdf-success");
+  }
+
+  function clearFile() {
+    selectedFile = null;
+    document.getElementById("pdfInput").value = "";
+    document.getElementById("filePreview").classList.remove("show");
+    document.getElementById("dropZone").style.display = "";
+    document.getElementById("uploadProgress").classList.remove("show");
+  }
+
+  function formatBytes(bytes) {
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+  }
+
+  // ── PDF upload ──
+  async function uploadPdf() {
+    if (!selectedFile) { showAlert("pdf-error", "Please select a PDF file first."); return; }
+
+    const docType = document.getElementById("pdf-doc-type").value;
+    const btn = document.getElementById("uploadBtn");
+    const progress = document.getElementById("uploadProgress");
+
+    clearAlert("pdf-error");
+    clearAlert("pdf-success");
+    btn.disabled = true;
+    btn.textContent = "Uploading";
+    btn.classList.add("loading-dots");
+    progress.classList.add("show");
+
+    // Animate progress bar (simulated — fetch doesn't expose upload progress easily)
+    let pct = 0;
+    const ticker = setInterval(() => {
+      pct = Math.min(pct + Math.random() * 15, 85);
+      setProgress(pct, "Uploading...");
+    }, 200);
+
+    try {
+      const form = new FormData();
+      form.append("file", selectedFile);
+      form.append("doc_type", docType);
+
+      const resp = await fetch(`/ingest/file?doc_type=${encodeURIComponent(docType)}`, {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + token },
+        body: form,
+      });
+
+      clearInterval(ticker);
+      setProgress(100, "Indexed!");
+
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.detail || "Upload failed");
+
+      docsIngested++;
+      document.getElementById("stat-docs").textContent = docsIngested;
+      document.getElementById("pdf-result-text").textContent =
+        `"${selectedFile.name}" · ${data.chunks_indexed} chunk(s) indexed · Doc ID: ${data.doc_id}`;
+      showAlert("pdf-success");
+
+      setTimeout(() => {
+        clearFile();
+        progress.classList.remove("show");
+      }, 1200);
+
+    } catch (err) {
+      clearInterval(ticker);
+      progress.classList.remove("show");
+      showAlert("pdf-error", err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Upload & Index PDF";
+      btn.classList.remove("loading-dots");
+    }
+  }
+
+  function setProgress(pct, label) {
+    document.getElementById("progressFill").style.width = pct + "%";
+    document.getElementById("progressPct").textContent = Math.round(pct) + "%";
+    document.getElementById("progressLabel").textContent = label;
+  }
+
+  // ── Text ingest ──
+  async function ingestText() {
+    const text = document.getElementById("ingest-text").value.trim();
+    const source = document.getElementById("ingest-source").value.trim() || "untitled.txt";
+    const doc_type = document.getElementById("ingest-type").value;
+    const btn = document.getElementById("ingestBtn");
+
+    clearAlert("text-error");
+    clearAlert("text-success");
+
+    if (!text || text.length < 10) {
+      showAlert("text-error", "Document text is too short (minimum 10 characters).");
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "Indexing";
+    btn.classList.add("loading-dots");
+
+    try {
+      const resp = await fetch("/ingest/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        body: JSON.stringify({ text, source, doc_type }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.detail || "Ingestion failed");
+
+      docsIngested++;
+      document.getElementById("stat-docs").textContent = docsIngested;
+      document.getElementById("text-result-text").textContent =
+        `"${source}" · ${data.chunks_indexed} chunk(s) indexed · Doc ID: ${data.doc_id}`;
+      showAlert("text-success");
+      document.getElementById("ingest-text").value = "";
+      document.getElementById("ingest-source").value = "";
+    } catch (err) {
+      showAlert("text-error", err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Upload & Index Text";
+      btn.classList.remove("loading-dots");
+    }
+  }
+
+  // ── Query ──
+  async function runQuery() {
+    const question = document.getElementById("query-question").value.trim();
+    const top_k = parseInt(document.getElementById("query-topk").value);
+    const btn = document.getElementById("queryBtn");
+    const resultEl = document.getElementById("query-result");
+
+    clearAlert("query-error");
+    resultEl.classList.remove("show");
+
+    if (!question || question.length < 3) {
+      showAlert("query-error", "Please enter a question (at least 3 characters).");
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "Analysing";
+    btn.classList.add("loading-dots");
+
+    try {
+      const resp = await fetch("/query/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        body: JSON.stringify({ question, top_k }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.detail || "Query failed");
+
+      queriesRun++;
+      document.getElementById("stat-queries").textContent = queriesRun;
+
+      const icons = { low: "🟢", medium: "🟡", high: "🔴", critical: "⚫" };
+      const badge = document.getElementById("result-risk-badge");
+      badge.textContent = `${icons[data.risk_level] || ""} ${data.risk_level.toUpperCase()}`;
+      badge.className = `risk-badge risk-${data.risk_level}`;
+
+      document.getElementById("result-answer").textContent = data.answer;
+      document.getElementById("result-summary").textContent = data.risk_summary;
+
+      const sourcesEl = document.getElementById("result-sources");
+      sourcesEl.innerHTML = data.sources.length
+        ? data.sources.map(s =>
+            `<span class="source-chip">📄 ${s.source} <span style="opacity:0.6">chunk ${s.chunk_index}</span></span>`
+          ).join("")
+        : `<span style="color:#94a3b8;font-size:13px;">No source documents retrieved</span>`;
+
+      const pct = Math.round(data.confidence * 100);
+      document.getElementById("confidence-fill").style.width = pct + "%";
+      document.getElementById("confidence-label").textContent = `Confidence: ${pct}%`;
+
+      resultEl.classList.add("show");
+    } catch (err) {
+      showAlert("query-error", err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Run Risk Query";
+      btn.classList.remove("loading-dots");
+    }
+  }
+
+  // ── Alert helpers ──
+  function showAlert(id, msg) {
+    const el = document.getElementById(id);
+    if (msg) el.textContent = msg;
+    el.classList.add("show");
+  }
+
+  function clearAlert(id) {
+    document.getElementById(id).classList.remove("show");
+  }
+
+  // ── Logout ──
+  function logout() {
+    sessionStorage.clear();
+    window.location.href = "/";
+  }
+</script>
+</body>
+</html>
