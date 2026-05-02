@@ -1,0 +1,31 @@
+# API
+fastapi==0.135.3
+uvicorn==0.44.0
+python-multipart==0.0.26
+aiofiles==25.1.0
+
+# Auth
+python-jose==3.5.0
+passlib==1.7.4
+
+# Config & validation
+pydantic==2.13.1
+pydantic-settings==2.13.1
+
+# Embeddings & vector search
+sentence-transformers==5.4.1
+faiss-cpu==1.13.2
+numpy==2.4.4
+
+# PDF parsing
+pypdf==6.10.2
+
+# LLM providers
+anthropic==0.97.0
+
+# HTTP
+requests==2.33.1
+httpx==0.28.1
+
+# Report generation (dev/testing only)
+fpdf2==2.8.7
